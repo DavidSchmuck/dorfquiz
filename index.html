@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ammerndorfer Dorfquiz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Amatic+SC:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:          #f5f8f2;
+      --white:       #ffffff;
+      --green-dark:  #2e6b3e;
+      --green:       #3d8c52;
+      --green-light: #e6f2e9;
+      --green-mid:   #b8d9c0;
+      --accent:      #f07c2a;
+      --accent-light:#fef0e4;
+      --text:        #2a3a2d;
+      --text-mid:    #4e6b54;
+      --text-dim:    #7a9a81;
+      --border:      #cce0d1;
+      --radius:      14px;
+      --shadow:      0 4px 24px rgba(46,107,62,.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 10% 0%, rgba(61,140,82,.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 100%, rgba(61,140,82,.06) 0%, transparent 50%);
+      color: var(--text);
+      font-family: 'Nunito', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+    }
+    .site-header { text-align: center; margin-bottom: 2rem; }
+    .site-header .badge {
+      display: inline-block;
+      background: var(--green-light);
+      color: var(--green-dark);
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: .3rem .85rem;
+      border-radius: 20px;
+      margin-bottom: .75rem;
+      border: 1px solid var(--green-mid);
+    }
+    .site-header h1 {
+      font-family: 'Amatic SC', cursive;
+      font-size: clamp(2.4rem, 7vw, 3.6rem);
+      color: var(--green-dark);
+      line-height: 1.1;
+    }
+    .header-leaf { display: block; font-size: 1.6rem; margin-top: .4rem; }
+    .progress-wrap { max-width: 680px; width: 100%; margin-bottom: .9rem; }
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--text-mid);
+      margin-bottom: .4rem;
+    }
+    .progress-track { height: 8px; background: var(--green-mid); border-radius: 8px; overflow: hidden; }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green) 0%, var(--green-dark) 100%);
+      border-radius: 8px;
+      transition: width .45s cubic-bezier(.4,0,.2,1);
+    }
+    .card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 2.2rem;
+      max-width: 680px;
+      width: 100%;
+      box-shadow: var(--shadow);
+    }
+    .station-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 1.1rem;
+      background: var(--green-light);
+      padding: .3rem .8rem;
+      border-radius: 20px;
+    }
+    .station-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .info-block {
+      background: var(--green-light);
+      border: 1px solid var(--green-mid);
+      border-left: 4px solid var(--green);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.8rem;
+      font-size: .98rem;
+      line-height: 1.75;
+      color: var(--text-mid);
+    }
+    .info-block strong {
+      display: block;
+      font-family: 'Amatic SC', cursive;
+      font-size: 1.5rem;
+      color: var(--green-dark);
+      margin-bottom: .4rem;
+    }
+    .question-label {
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .4rem;
+    }
+    .question-text {
+      font-family: 'Amatic SC', cursive;
+      font-size: 1.65rem;
+      color: var(--text);
+      line-height: 1.35;
+      margin-bottom: 1.4rem;
+    }
+    .help-toggle {
+      background: var(--accent-light);
+      border: 1.5px solid #f5c9a0;
+      color: var(--accent);
+      font-family: 'Nunito', sans-serif;
+      font-size: .9rem;
+      font-weight: 700;
+      padding: .5rem 1rem;
+      border-radius: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      transition: background .18s;
+    }
+    .help-toggle:hover { background: #fde3cc; }
+    .help-toggle .arrow { font-size: .65rem; transition: transform .22s; }
+    .help-toggle.open .arrow { transform: rotate(180deg); }
+    .help-box {
+      display: none;
+      margin-top: .8rem;
+      background: var(--accent-light);
+      border: 1.5px dashed #f5c9a0;
+      border-radius: var(--radius);
+      padding: .85rem 1.1rem;
+      font-style: italic;
+      color: #a0501a;
+      font-size: .95rem;
+      line-height: 1.7;
+    }
+    .help-box.visible { display: block; }
+    .nav-row { max-width: 680px; width: 100%; margin-top: 1.2rem; display: flex; gap: .75rem; }
+    .btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      padding: .72rem 1.5rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: none;
+      transition: transform .1s, opacity .15s, box-shadow .15s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+      color: #fff;
+      flex: 1;
+      box-shadow: 0 4px 14px rgba(46,107,62,.28);
+    }
+    .btn-primary:hover { opacity: .9; }
+    .btn-secondary {
+      background: var(--white);
+      color: var(--text-mid);
+      border: 1.5px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--green-mid); color: var(--green-dark); }
+    .welcome-icon { font-size: 3rem; text-align: center; margin-bottom: .9rem; }
+    .welcome-card h2 { font-family: 'Amatic SC', cursive; font-size: 2rem; color: var(--green-dark); margin-bottom: .9rem; }
+    .welcome-card p { line-height: 1.75; color: var(--text-mid); margin-bottom: .7rem; font-size: .98rem; }
+    .end-icon { font-size: 2.8rem; text-align: center; margin-bottom: .8rem; }
+    .end-card h2 { font-family: 'Amatic SC', cursive; font-size: 2rem; color: var(--green-dark); margin-bottom: .9rem; }
+    .end-card p { line-height: 1.75; color: var(--text-mid); margin-bottom: .7rem; font-size: .98rem; }
+    .contact-hint {
+      margin-top: 1rem; padding: .8rem 1rem;
+      background: var(--green-light); border: 1px solid var(--green-mid);
+      border-radius: var(--radius); font-size: .9rem; color: var(--text-mid);
+    }
+    .contact-hint a { color: var(--green-dark); font-weight: 700; text-decoration: none; }
+    .contact-hint a:hover { text-decoration: underline; }
+    #qr-section { max-width: 680px; width: 100%; margin-top: 2rem; }
+    .show-qr-btn {
+      display: block; margin: 0 auto;
+      background: var(--white); border: 1.5px solid var(--border);
+      color: var(--text-mid); font-family: 'Nunito', sans-serif;
+      font-size: .88rem; font-weight: 700; padding: .5rem 1.3rem;
+      border-radius: 20px; cursor: pointer; transition: border-color .18s, color .18s;
+    }
+    .show-qr-btn:hover { border-color: var(--green-mid); color: var(--green-dark); }
+    .qr-header { font-family: 'Amatic SC', cursive; font-size: 1.4rem; color: var(--green-dark); margin-bottom: .8rem; text-align: center; }
+    .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .7rem; }
+    .qr-item {
+      background: var(--white); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: .9rem .7rem .7rem;
+      text-align: center; cursor: pointer;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .qr-item:hover { border-color: var(--green); box-shadow: var(--shadow); }
+    .qr-item canvas { display: block; margin: 0 auto .5rem; border-radius: 6px; }
+    .qr-item .qr-label { font-size: .75rem; font-weight: 700; color: var(--text-mid); line-height: 1.3; }
+    .qr-note { margin-top: .8rem; font-size: .8rem; color: var(--text-dim); text-align: center; font-style: italic; }
+    @media (max-width: 480px) {
+      .card { padding: 1.4rem 1.2rem; }
+      .qr-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="badge">🌻 Ammerndorfer Dorfkinder</div>
+    <h1>Dorfquiz<br>Ammerndorf</h1>
+    <span class="header-leaf">🍃</span>
+  </header>
+
+  <div class="progress-wrap" id="progress-wrap" style="display:none">
+    <div class="progress-info">
+      <span id="progress-label"></span>
+      <span id="progress-pct"></span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div id="app"></div>
+  <div class="nav-row" id="nav-row"></div>
+
+  <div id="qr-section" style="display:none">
+    <button class="show-qr-btn" id="toggle-qr-btn" onclick="toggleQR()">▼ QR-Codes für Stationen anzeigen</button>
+    <div id="qr-codes-area" style="display:none; margin-top:1.2rem">
+      <p class="qr-header">📱 QR-Codes zum Ausdrucken</p>
+      <div class="qr-grid" id="qr-grid"></div>
+      <p class="qr-note">Klicke auf einen QR-Code, um den Link zu kopieren.</p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script>
+    const STATIONS = [
+      { info_title: null, info_text: null,
+        question: "Wo befindet sich das Dreschmaschinenhaus?",
+        help: "Man findet das gesuchte Gebäude, wenn man den landwirtschaftlichen Weg, der am Bürgerhaus vorbeiführt, Richtung Friedhof am Sommerkeller geht." },
+      { info_title: "Das Dreschmaschinenhaus",
+        info_text: "Wie der Name verrät, wurden hier früher landwirtschaftliche Maschinen und Geräte zum Dreschen von Getreide, also das Lösen von Körnern von den Getreidehalmen, aufbewahrt. Heute ist das Dreschmaschinenhaus in Benutzung des Heimat- und Gartenbauvereins, der hier Veranstaltungen wie Brotbacken oder das Holunderfest stattfinden lässt.",
+        question: "Welches Gebäude hört man mehrmals am Tag in ganz Ammerndorf?",
+        help: "Das gesuchte Gebäude ist auch das höchste Gebäude in Ammerndorf." },
+      { info_title: "Die Sankt Peter und Paul Kirche",
+        info_text: "Die Kirche wurde 1256 das erste mal urkundlich erwähnt. Seitdem wurde die Kirche mehrmals umgebaut und 1743 um den Pfarrhof erweitert, in dem sich heute auch eine Bücherei befindet. Zur Ehren der Apostel Petrus und Paulus, die die Schutzpatrone der Kirche sind, wird die Kirchweih (fränkisch Kärwa) jährlich am Wochenende nach dem Festtag Peter und Paul (29. Juni) gefeiert.",
+        question: "Wo wird der Kärwabaum in Ammerndorf aufgestellt?",
+        help: "Er befindet sich ganz in der Nähe vom Dullikener Platz, wo auch die Kärwa stattfindet." },
+      { info_title: "Der Bahnhofsplatz",
+        info_text: "Hier hat früher die Eisenbahn Bibertbahn gehalten. Nachdem sich die Ortschaften im Biberttal sich lange nicht auf eine gemeinsame Streckenlinie einigen konnten, fuhr dann aber von 1914 bis 1986 das \u201EBibertbärbala\u201C zwischen Stein und Rügland. Heute befindet sich im ehemaligen Bahnhof eine Arztpraxis.",
+        question: "Wo befindet sich in Ammerndorf das Denkmal für die Eisenbahn?",
+        help: "Neben der Kärwa gibt es auch eine weitere große Veranstaltung in Ammerndorf, die immer im Herbst dort stattfindet. Dort findest du auch das Denkmal." },
+      { info_title: "Der Marktplatz",
+        info_text: "Eng verbunden mit dem Markt Ammerndorf ist der Marktplatz und das damit verbundene Recht zum Abhalten von Märkten. Seit circa 1414 findet der Jahrmarkt in Ammerndorf am Sankt Burkhardstag (14. Oktober) statt. Am Marktplatz fand lange Zeit auch der Getreidemarkt statt, an dem Getreide vermarktet wurde. Heute findet wieder seit 1984 der Herbstmarkt statt, bei denen viele Ammerndorfer Vereine, Gewerbe und Schausteller beteiligt sind.",
+        question: "Ein Produkt, das damals hier bereits verkauft wurde, wird auch heute noch in Ammerndorf hergestellt. Wo wird dieses Produkt hergestellt?",
+        help: "Das Produkt benötigt man auch zum Backen von Kuchen und Plätzchen. Und nein, es handelt sich nicht um Bier für Bier-Kuchen oder Bier-Plätzchen." },
+      { info_title: "Die Ammerndorfer Mühle",
+        info_text: "Neben der Bubenmühle steht hier die zweite Ammerndorfer Wassermühle, in der seit Beginn an Mehl gemahlen wird. Sie ist seit der Erbauung in 1607 einer der prächtigsten und größten Mühlen in der Umgebung. Seit 1878 befindet sich die Mühle im Familienbetrieb.",
+        question: "Neben dem Kirchturm und der Mühle gibt es ein weiteres hohes Gebäude in Ammerndorf. Welches Gebäude muss auch hoch sein, um seine Funktion zu erfüllen?",
+        help: "Das Gebäude selbst ist an und für sich nicht sehr hoch, es hat aber einen hohen Turm, um darin Schläuche aufzuhängen und trocknen zu lassen, weshalb er auch Schlauchturm genannt wird." },
+      { info_title: "Die Freiwillige Feuerwehr Ammerndorf",
+        info_text: "Seit Beginn der Ortschaft gibt es Vorkehrungen zum Schutz vor Feuer. Seit 1873 gibt es die \u201EFreiwillige Feuerwehr\u201C in Ammerndorf, die für das Retten, Löschen, Bergen, und Schützen der Bevölkerung verantwortlich ist. Seit 1997 befindet sich das Feuerwehrgerätehaus in dem mit dem Schützenverein geteilten Gebäude am Dullikener Platz. Es gibt auch eine Kinder- und Jugendfeuerwehr, in der spielerisch praktische Kenntnisse in Erster Hilfe, Brandbekämpfung, technischer Hilfeleistung und der Umgang mit Feuerwehrgeräten geschult wird.",
+        question: "Wenn die Feuerwehr benötigt wird, erkennt man das am Ertönen der Sirene. Wo befindet sich die Feuerwehrsirene in Ammerndorf?",
+        help: "Das Bekämpfen von Feuer gehört zu einer Pflichtaufgabe der Gemeinden. Die Sirene befindet sich dort, wo die Verwaltung der Gemeinde ihren Sitz hat." },
+      { info_title: "Das Rathaus",
+        info_text: "Seit 1998 ist die Gemeinde Ammerndorf wieder für ihre eigenen Geschicke und Zukunft verantwortlich, auch mit eigener Verwaltung. Hier hat die Verwaltungsleitung, sprich der oder die Bürgermeisterin, und deren Mitarbeitenden ihre Büros. Im Rathaus können zum Beispiel der Personalausweis beantragt oder auch standesamtlich geheiratet werden.",
+        question: "Wo tagt der Gemeinderat zu Belangen der Ammerndorfer Bevölkerung?",
+        help: "Dort befindet sich auch der Bürgerspielplatz." },
+      { info_title: "Das Bürgerhaus",
+        info_text: "Früher als Turnhalle genutzt, kommen heute hier die Bürger und Bürgerinnen aus Ammerndorf und der Umgebung zusammen, um sich zu begegnen. Hier wird auch Sport betrieben, Theater gespielt oder bei Kaffee und Kuchen geplaudert. Abends kommt der Gemeinderat zusammen, um sich zu beraten und Entscheidungen über die Ammerndorfer Gegenwart und Zukunft zu treffen.",
+        question: "Was ist für dich ein Anliegen, um Ammerndorf lebenswert und als ein Ort der Gemeinschaft zu erhalten?",
+        help: "Ein Dorf lebt von seinen Menschen. Jeder Mensch ist ein Teil davon und macht Ammerndorf lebendiger und lebenswerter. Zeige das lebendige Ammerndorf und beteilige dich doch aktiv in einen der vielen Vereine in Ammerndorf." }
+    ];
+
+    const TOTAL = STATIONS.length;
+    let currentStation = 0;
+    let helpOpen = false;
+
+    function getBaseURL() { return window.location.origin + window.location.pathname; }
+    function stationURL(n) { return getBaseURL() + '?station=' + n; }
+
+    (function () {
+      const s = parseInt(new URLSearchParams(window.location.search).get('station'));
+      if (!isNaN(s) && s >= 1 && s <= TOTAL) currentStation = s;
+    })();
+
+    function render() {
+      helpOpen = false;
+      const app = document.getElementById('app');
+      const navRow = document.getElementById('nav-row');
+      const progWrap = document.getElementById('progress-wrap');
+      const qrSection = document.getElementById('qr-section');
+
+      if (currentStation === 0) {
+        progWrap.style.display = 'none';
+        qrSection.style.display = 'block';
+        app.innerHTML = `
+          <div class="card welcome-card">
+            <div class="welcome-icon">🗺️</div>
+            <h2>Herzlich Willkommen!</h2>
+            <p>Das Quiz führt anhand von neun Fragen durch verschiedene Orte von Ammerndorf – für Kinder im Alter von 8 bis 14 Jahren (oder jünger in Begleitung von Erwachsenen).</p>
+            <p>Wenn die Antwort zu einer Frage nicht bekannt ist, kann einfach zur nächsten Seite gewechselt und sich dann zum entsprechenden Ort hinbewegt werden.</p>
+          </div>`;
+        navRow.innerHTML = `<button class="btn btn-primary" onclick="goTo(1)">Quiz starten 🚀</button>`;
+        renderQRCodes();
+
+      } else if (currentStation > TOTAL) {
+        progWrap.style.display = 'none';
+        qrSection.style.display = 'none';
+        app.innerHTML = `
+          <div class="card end-card">
+            <div class="end-icon">🎉</div>
+            <h2>Geschafft! Vielen Dank!</h2>
+            <p>Du hast alle neun Stationen des Ammerndorfer Dorfquiz abgeschlossen. Wir hoffen, du hast dabei etwas Neues über unser schönes Dorf erfahren!</p>
+            <div class="contact-hint">💬 Fragen oder Anregungen? Schreib an: <a href="mailto:info.quiz@posteo.de">info.quiz@posteo.de</a></div>
+          </div>`;
+        navRow.innerHTML = `<button class="btn btn-secondary" onclick="goTo(0)">← Zum Anfang</button>`;
+
+      } else {
+        const st = STATIONS[currentStation - 1];
+        const pct = Math.round((currentStation / TOTAL) * 100);
+        progWrap.style.display = 'block';
+        qrSection.style.display = 'none';
+        document.getElementById('progress-label').textContent = `Station ${currentStation} von ${TOTAL}`;
+        document.getElementById('progress-pct').textContent = pct + ' %';
+        document.getElementById('progress-fill').style.width = pct + '%';
+
+        const infoHTML = st.info_title
+          ? `<div class="info-block"><strong>📍 ${st.info_title}</strong>${st.info_text}</div>`
+          : ``;
+
+        app.innerHTML = `
+          <div class="card">
+            <div class="station-badge"><span class="dot"></span>Station ${currentStation} von ${TOTAL}</div>
+            ${infoHTML}
+            <p class="question-label">❓ Frage ${currentStation}</p>
+            <p class="question-text">${st.question}</p>
+            <button class="help-toggle" id="help-btn" onclick="toggleHelp()">💡 Hilfe anzeigen <span class="arrow">▼</span></button>
+            <div class="help-box" id="help-box">${st.help}</div>
+          </div>`;
+
+        navRow.innerHTML = `
+          <button class="btn btn-secondary" onclick="goTo(${currentStation <= 1 ? 0 : currentStation - 1})">← Zurück</button>
+          <button class="btn btn-primary" onclick="goTo(${currentStation + 1})">${currentStation === TOTAL ? 'Abschließen ✓' : 'Weiter →'}</button>`;
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goTo(n) { currentStation = n; render(); }
+
+    function toggleHelp() {
+      helpOpen = !helpOpen;
+      document.getElementById('help-box').classList.toggle('visible', helpOpen);
+      const btn = document.getElementById('help-btn');
+      btn.classList.toggle('open', helpOpen);
+      btn.innerHTML = (helpOpen ? '💡 Hilfe verbergen ' : '💡 Hilfe anzeigen ') + `<span class="arrow">${helpOpen ? '▲' : '▼'}</span>`;
+    }
+
+    let qrRendered = false;
+    function toggleQR() {
+      const area = document.getElementById('qr-codes-area');
+      const btn = document.getElementById('toggle-qr-btn');
+      const open = area.style.display === 'none';
+      area.style.display = open ? 'block' : 'none';
+      btn.textContent = open ? '▲ QR-Codes ausblenden' : '▼ QR-Codes für Stationen anzeigen';
+      if (open && !qrRendered) renderQRCodes();
+    }
+
+    function renderQRCodes() {
+      if (qrRendered) return;
+      const grid = document.getElementById('qr-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const allEntries = [
+        { label: 'Allgemeiner Start\n(Bürgerhaus)', url: getBaseURL() },
+        ...STATIONS.map((st, i) => ({
+          label: `Station ${i + 1}${st.info_title ? '\n' + st.info_title : ''}`,
+          url: stationURL(i + 1)
+        }))
+      ];
+      allEntries.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'qr-item';
+        item.title = 'Klicken um URL zu kopieren';
+        const canvas = document.createElement('canvas');
+        item.appendChild(canvas);
+        new QRious({ element: canvas, value: entry.url, size: 120, background: '#ffffff', foreground: '#2e6b3e', level: 'M' });
+        const lbl = document.createElement('div');
+        lbl.className = 'qr-label';
+        lbl.textContent = entry.label;
+        item.appendChild(lbl);
+        item.addEventListener('click', () => {
+          navigator.clipboard.writeText(entry.url).then(() => {
+            lbl.textContent = '✓ Kopiert!';
+            setTimeout(() => { lbl.textContent = entry.label; }, 1500);
+          });
+        });
+        grid.appendChild(item);
+      });
+      qrRendered = true;
+    }
+
+    render();
+  </script>
+</body>
+</html>
