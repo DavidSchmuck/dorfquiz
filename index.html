@@ -236,7 +236,7 @@
   <div class="progress-wrap" id="progress-wrap" style="display:none">
     <div class="progress-info">
       <span id="progress-label"></span>
-      <span id="progress-pct"></span>
+<span id="progress-pct"></span>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
   </div>
@@ -295,6 +295,7 @@
 
     const TOTAL = STATIONS.length;
     let currentStation = 0;
+    let targetStation = 0;
     let helpOpen = false;
 
     function getBaseURL() { return window.location.origin + window.location.pathname; }
@@ -302,7 +303,12 @@
 
     (function () {
       const s = parseInt(new URLSearchParams(window.location.search).get('station'));
-      if (!isNaN(s) && s >= 1 && s <= TOTAL) currentStation = s;
+      if (!isNaN(s) && s >= 1 && s <= TOTAL) {
+        targetStation = s;
+        if (localStorage.getItem('dorfquiz_visited_' + s)) {
+          currentStation = s;
+        }
+      }
     })();
 
     function render() {
@@ -322,7 +328,10 @@
             <p>Das Quiz führt anhand von neun Fragen durch verschiedene Orte von Ammerndorf – für Kinder im Alter von 8 bis 14 Jahren (oder jünger in Begleitung von Erwachsenen).</p>
             <p>Wenn die Antwort zu einer Frage nicht bekannt ist, kann einfach zur nächsten Seite gewechselt und sich dann zum entsprechenden Ort hinbewegt werden.</p>
           </div>`;
-        navRow.innerHTML = `<button class="btn btn-primary" onclick="goTo(1)">Quiz starten 🚀</button>`;
+        const startStation = targetStation > 0 ? targetStation : 1;
+        const stationHint = targetStation > 0 ? `<p style="margin-top:.6rem;font-size:.88rem;color:var(--text-dim);font-style:italic">Du startest bei Station ${targetStation}: ${STATIONS[targetStation-1].info_title || 'Erste Station'}</p>` : '';
+        app.querySelector('.welcome-card').insertAdjacentHTML('beforeend', stationHint);
+        navRow.innerHTML = `<button class="btn btn-primary" onclick="goTo(${startStation})">Quiz starten 🚀</button>`;
         renderQRCodes();
 
       } else if (currentStation > TOTAL) {
@@ -367,7 +376,11 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function goTo(n) { currentStation = n; render(); }
+    function goTo(n) {
+      if (n >= 1 && n <= TOTAL) localStorage.setItem('dorfquiz_visited_' + n, '1');
+      currentStation = n;
+      render();
+    }
 
     function toggleHelp() {
       helpOpen = !helpOpen;
@@ -419,6 +432,11 @@
         grid.appendChild(item);
       });
       qrRendered = true;
+    }
+
+    // Service Worker (Offline-Modus)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
     }
 
     render();
