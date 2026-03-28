@@ -296,6 +296,7 @@
     const TOTAL = STATIONS.length;
     let currentStation = 0;
     let targetStation = 0;
+    let stationsCompleted = 0;
     let helpOpen = false;
 
     function getBaseURL() { return window.location.origin + window.location.pathname; }
@@ -348,10 +349,10 @@
 
       } else {
         const st = STATIONS[currentStation - 1];
-        const pct = Math.round((currentStation / TOTAL) * 100);
+        const pct = Math.round((stationsCompleted / TOTAL) * 100);
         progWrap.style.display = 'block';
         qrSection.style.display = 'none';
-        document.getElementById('progress-label').textContent = `Station ${currentStation} von ${TOTAL}`;
+        document.getElementById('progress-label').textContent = `Schritt ${stationsCompleted + 1} von ${TOTAL}`;
         document.getElementById('progress-pct').textContent = pct + ' %';
         document.getElementById('progress-fill').style.width = pct + '%';
 
@@ -370,16 +371,36 @@
           </div>`;
 
         navRow.innerHTML = `
-          <button class="btn btn-secondary" onclick="goTo(${currentStation <= 1 ? 0 : currentStation - 1})">← Zurück</button>
-          <button class="btn btn-primary" onclick="goTo(${currentStation + 1})">${currentStation === TOTAL ? 'Abschließen ✓' : 'Weiter →'}</button>`;
+          <button class="btn btn-secondary" onclick="goBack()">← Zurück</button>
+          <button class="btn btn-primary" onclick="goForward()">${stationsCompleted === TOTAL - 1 ? 'Abschließen ✓' : 'Weiter →'}</button>`;
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function goTo(n) {
+      if (n === 0) stationsCompleted = 0;
       if (n >= 1 && n <= TOTAL) localStorage.setItem('dorfquiz_visited_' + n, '1');
       currentStation = n;
       render();
+    }
+
+    function goForward() {
+      stationsCompleted++;
+      if (stationsCompleted >= TOTAL) {
+        currentStation = TOTAL + 1;
+        render();
+      } else {
+        goTo((currentStation % TOTAL) + 1);
+      }
+    }
+
+    function goBack() {
+      if (stationsCompleted === 0) {
+        goTo(0);
+      } else {
+        stationsCompleted--;
+        goTo(((currentStation - 2 + TOTAL) % TOTAL) + 1);
+      }
     }
 
     function toggleHelp() {
