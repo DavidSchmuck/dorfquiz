@@ -505,13 +505,10 @@
       const grid = document.getElementById('qr-grid');
       if (!grid) return;
       grid.innerHTML = '';
-      const allEntries = [
-        { label: 'Allgemeiner Start\n(Bürgerhaus)', url: getBaseURL() },
-        ...STATIONS.map((st, i) => ({
-          label: `Station ${i + 1}${st.info_title ? '\n' + st.info_title : ''}`,
-          url: stationURL(i + 1)
-        }))
-      ];
+      const allEntries = STATIONS.slice(1).map((st, i) => ({
+        label: st.info_title,
+        url: stationURL(i + 1)
+      }));
       allEntries.forEach(entry => {
         const item = document.createElement('div');
         item.className = 'qr-item';
