@@ -115,6 +115,29 @@
       color: var(--green-dark);
       margin-bottom: .4rem;
     }
+    .audio-controls {
+      margin: 1rem 0 1.2rem;
+    }
+    .audio-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      border: 1.5px solid var(--green-mid);
+      background: var(--white);
+      color: var(--green-dark);
+      border-radius: 999px;
+      padding: .6rem 1rem;
+      font-family: 'Nunito', sans-serif;
+      font-size: .9rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .18s, border-color .18s, transform .1s;
+    }
+    .audio-btn:hover {
+      background: var(--green-light);
+      border-color: var(--green);
+    }
+    .audio-btn:active { transform: scale(.98); }
     .question-label {
       font-size: .75rem;
       font-weight: 800;
@@ -220,6 +243,12 @@
     .qr-item canvas { display: block; margin: 0 auto .5rem; border-radius: 6px; }
     .qr-item .qr-label { font-size: .75rem; font-weight: 700; color: var(--text-mid); line-height: 1.3; }
     .qr-note { margin-top: .8rem; font-size: .8rem; color: var(--text-dim); text-align: center; font-style: italic; }
+    .next-hint {
+      margin-top: 1.4rem; padding: .9rem 1rem;
+      background: var(--green-light); border: 1px solid var(--green-mid);
+      border-radius: var(--radius); font-size: .92rem;
+      color: var(--text-mid); text-align: center;
+    }
     @media (max-width: 480px) {
       .card { padding: 1.4rem 1.2rem; }
       .qr-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
@@ -294,19 +323,38 @@
     ];
 
     const TOTAL = STATIONS.length;
+    const STATION_KEYS = ['dreschhaus','kirchturm','kaerwabaum','bahnhofsplatz','marktplatz','muehle','feuerwehr','rathaus','buergerhaus'];
+    const STATION_AUDIO = [
+      '',
+      'audio_Dreschmaschinenhaus.mp3',
+      'audio_Kirche.mp3',
+      'audio_Bahnhof.mp3',
+      'audio_Marktplatz.mp3',
+      'audio_Mühle.mp3',
+      'audio_Feuerwehr.mp3',
+      'audio_Rathaus.mp3',
+      'audio_Bürgerhaus.mp3'
+    ];
+    const unlockedStations = new Set(JSON.parse(localStorage.getItem('dorfquiz_unlocked') || '[]'));
     let currentStation = 0;
     let targetStation = 0;
-    let stationsCompleted = 0;
     let helpOpen = false;
+    let activeAudio = null;
 
     function getBaseURL() { return window.location.origin + window.location.pathname; }
-    function stationURL(n) { return getBaseURL() + '?station=' + n; }
+    function stationURL(n) { return getBaseURL() + '?station=' + n + '&key=' + STATION_KEYS[n - 1]; }
 
     (function () {
-      const s = parseInt(new URLSearchParams(window.location.search).get('station'));
+      const params = new URLSearchParams(window.location.search);
+      const s = parseInt(params.get('station'));
+      const key = params.get('key');
       if (!isNaN(s) && s >= 1 && s <= TOTAL) {
         targetStation = s;
-        if (localStorage.getItem('dorfquiz_visited_' + s)) {
+        if (key === STATION_KEYS[s - 1]) {
+          unlockedStations.add(s);
+          localStorage.setItem('dorfquiz_unlocked', JSON.stringify([...unlockedStations]));
+        }
+        if (localStorage.getItem('dorfquiz_visited_' + s) && unlockedStations.has(s)) {
           currentStation = s;
         }
       }
@@ -326,13 +374,10 @@
           <div class="card welcome-card">
             <div class="welcome-icon">🗺️</div>
             <h2>Herzlich Willkommen!</h2>
-            <p>Das Quiz führt anhand von neun Fragen durch verschiedene Orte von Ammerndorf – für Kinder im Alter von 8 bis 14 Jahren (oder jünger in Begleitung von Erwachsenen).</p>
-            <p>Wenn die Antwort zu einer Frage nicht bekannt ist, kann einfach zur nächsten Seite gewechselt und sich dann zum entsprechenden Ort hinbewegt werden.</p>
+            <p>Das Dorfquiz beginnt erst, wenn du den QR-Code an einer Station vor Ort scannst.</p>
+            <p>Jede Station kann einzeln gestartet werden – scanne einfach den Code bei deinem gewünschten Ort, um die Information und die Frage zu öffnen.</p>
           </div>`;
-        const startStation = targetStation > 0 ? targetStation : 1;
-        const stationHint = targetStation > 0 ? `<p style="margin-top:.6rem;font-size:.88rem;color:var(--text-dim);font-style:italic">Du startest bei Station ${targetStation}: ${STATIONS[targetStation-1].info_title || 'Erste Station'}</p>` : '';
-        app.querySelector('.welcome-card').insertAdjacentHTML('beforeend', stationHint);
-        navRow.innerHTML = `<button class="btn btn-primary" onclick="goTo(${startStation})">Quiz starten 🚀</button>`;
+        navRow.innerHTML = `<p style="text-align:center;color:var(--text-dim);font-size:.9rem;padding:.5rem">📱 Scanne den QR-Code an einer Station, um das Quiz zu starten.</p>`;
         renderQRCodes();
 
       } else if (currentStation > TOTAL) {
@@ -348,60 +393,65 @@
         navRow.innerHTML = `<button class="btn btn-secondary" onclick="goTo(0)">← Zum Anfang</button>`;
 
       } else {
-        const st = STATIONS[currentStation - 1];
-        const pct = Math.round((stationsCompleted / TOTAL) * 100);
+        const step = unlockedStations.size;
+        const pct = Math.round((step / TOTAL) * 100);
         progWrap.style.display = 'block';
         qrSection.style.display = 'none';
-        document.getElementById('progress-label').textContent = `Schritt ${stationsCompleted + 1} von ${TOTAL}`;
+        document.getElementById('progress-label').textContent = `Schritt ${step} von ${TOTAL}`;
         document.getElementById('progress-pct').textContent = pct + ' %';
         document.getElementById('progress-fill').style.width = pct + '%';
 
-        const infoHTML = st.info_title
-          ? `<div class="info-block"><strong>📍 ${st.info_title}</strong>${st.info_text}</div>`
-          : ``;
+        if (!unlockedStations.has(currentStation)) {
+          app.innerHTML = `
+            <div class="card">
+              <div class="station-badge"><span class="dot"></span>Gesperrt</div>
+              <div style="text-align:center;padding:1.5rem 0">
+                <div style="font-size:2.8rem;margin-bottom:.8rem">🔒</div>
+                <p class="question-text">Scanne den QR-Code an dieser Station!</p>
+                <p style="color:var(--text-dim);font-size:.9rem">Der QR-Code hängt vor Ort an der Station.</p>
+              </div>
+            </div>`;
+          navRow.innerHTML = `<button class="btn btn-secondary" onclick="goBack()">← Zurück</button>`;
+        } else {
+          const st = STATIONS[currentStation - 1];
+          const isLast = unlockedStations.size === TOTAL;
+          const stationAudio = STATION_AUDIO[currentStation - 1] || '';
+          const infoHTML = st.info_title
+            ? `<div class="info-block"><strong>📍 ${st.info_title}</strong>${st.info_text}</div>`
+            : ``;
+          const audioHTML = stationAudio
+            ? `<div class="audio-controls"><button class="audio-btn" type="button" data-audio-id="${currentStation}" onclick="toggleAudio(${currentStation})">🔊 Information als Audio abspielen</button><audio id="station-audio-${currentStation}" preload="metadata" src="./${stationAudio}"></audio></div>`
+            : '';
+          const nextHint = isLast ? '' : `<div class="next-hint">📍 Gehe zur nächsten Station und scanne dort den QR-Code!</div>`;
 
-        app.innerHTML = `
-          <div class="card">
-            <div class="station-badge"><span class="dot"></span>${st.info_title || 'Start'}</div>
-            ${infoHTML}
-            <p class="question-label">❓ Frage</p>
-            <p class="question-text">${st.question}</p>
-            <button class="help-toggle" id="help-btn" onclick="toggleHelp()">💡 Hilfe anzeigen <span class="arrow">▼</span></button>
-            <div class="help-box" id="help-box">${st.help}</div>
-          </div>`;
+          app.innerHTML = `
+            <div class="card">
+              <div class="station-badge"><span class="dot"></span>${st.info_title || 'Start'}</div>
+              ${infoHTML}
+              ${audioHTML}
+              <p class="question-label">❓ Frage</p>
+              <p class="question-text">${st.question}</p>
+              <button class="help-toggle" id="help-btn" onclick="toggleHelp()">💡 Hilfe anzeigen <span class="arrow">▼</span></button>
+              <div class="help-box" id="help-box">${st.help}</div>
+              ${nextHint}
+            </div>`;
 
-        navRow.innerHTML = `
-          <button class="btn btn-secondary" onclick="goBack()">← Zurück</button>
-          <button class="btn btn-primary" onclick="goForward()">${stationsCompleted === TOTAL - 1 ? 'Abschließen ✓' : 'Weiter →'}</button>`;
+          navRow.innerHTML = isLast
+            ? `<button class="btn btn-secondary" onclick="goBack()">← Zurück</button>
+               <button class="btn btn-primary" onclick="goTo(${TOTAL + 1})">Abschließen ✓</button>`
+            : `<button class="btn btn-secondary" onclick="goBack()">← Zurück</button>`;
+        }
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function goTo(n) {
-      if (n === 0) stationsCompleted = 0;
       if (n >= 1 && n <= TOTAL) localStorage.setItem('dorfquiz_visited_' + n, '1');
       currentStation = n;
       render();
     }
 
-    function goForward() {
-      stationsCompleted++;
-      if (stationsCompleted >= TOTAL) {
-        currentStation = TOTAL + 1;
-        render();
-      } else {
-        goTo((currentStation % TOTAL) + 1);
-      }
-    }
-
-    function goBack() {
-      if (stationsCompleted === 0) {
-        goTo(0);
-      } else {
-        stationsCompleted--;
-        goTo(((currentStation - 2 + TOTAL) % TOTAL) + 1);
-      }
-    }
+    function goBack() { goTo(0); }
 
     function toggleHelp() {
       helpOpen = !helpOpen;
@@ -409,6 +459,35 @@
       const btn = document.getElementById('help-btn');
       btn.classList.toggle('open', helpOpen);
       btn.innerHTML = (helpOpen ? '💡 Hilfe verbergen ' : '💡 Hilfe anzeigen ') + `<span class="arrow">${helpOpen ? '▲' : '▼'}</span>`;
+    }
+
+    function toggleAudio(n) {
+      const audio = document.getElementById(`station-audio-${n}`);
+      const btn = document.querySelector(`[data-audio-id="${n}"]`);
+      if (!audio || !btn) return;
+
+      if (activeAudio && activeAudio !== audio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+        const activeBtn = document.querySelector(`[data-audio-id="${activeAudio.id.replace('station-audio-', '')}"]`);
+        if (activeBtn) activeBtn.textContent = '🔊 Information als Audio abspielen';
+      }
+
+      if (audio.paused) {
+        audio.play();
+        btn.textContent = '⏸️ Audio pausieren';
+        activeAudio = audio;
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+        btn.textContent = '🔊 Information als Audio abspielen';
+        activeAudio = null;
+      }
+
+      audio.onended = () => {
+        btn.textContent = '🔊 Information als Audio abspielen';
+        if (activeAudio === audio) activeAudio = null;
+      };
     }
 
     let qrRendered = false;
